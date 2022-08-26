@@ -2,8 +2,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
-//Check if the move is the same as the square that it's already on, check if you are moving to a square with a piece that is the same color as yours.
-//Check if you are moving off the board.
+
 public class Board {
     private static final boolean white = true;
     private static final boolean black = false;
@@ -11,7 +10,7 @@ public class Board {
     private int whiteKingSquare;
     private int blackKingSquare;
     private boolean whoseTurn;
-    private Stack<Piece[][]> previousBoardPositions;//used for undo but can also be used for repetitions
+    private Stack<Piece[][]> previousBoardPositions;
     private Set<Integer> whiteLocations;
     private Set<Integer> blackLocations;
     private Boolean isCheckmated;
@@ -296,7 +295,6 @@ public class Board {
         }
 
         if (this.areYouInCheck()) {
-            //this.previousBoardPositions.pop();
             this.undo();
             System.out.println("You are in check.");
             return false;
@@ -350,14 +348,14 @@ public class Board {
         if(color){
             for (int number : this.blackLocations) {
                 if (numberToPiece(number).canMove(this.board, number, attackingSquare)) {
-                    if (numberToPiece(number) instanceof King) {//don't let the king kill the queen in four move check mate
+                    if (numberToPiece(number) instanceof King) {//Check if king can truly kill attacking piece, as it may be defended
                         int oldBlackKingSquare = this.blackKingSquare;
                         this.blackKingSquare = attackingSquare;
                         if (!blackIsInCheck()) {
                             this.switchWhoseTurn();
                             this.blackKingSquare = oldBlackKingSquare;
                             System.out.println("9");
-                            return true;//the guy can kill the piece to get out of check so no checkmate
+                            return true;//Player can kill the checking piece so it is not checkmate
                         }
                         this.blackKingSquare = oldBlackKingSquare;
                     }
@@ -373,7 +371,7 @@ public class Board {
                             this.switchWhoseTurn();
                             this.whiteKingSquare = oldWhiteKingSquare;
                             System.out.println("9");
-                            return true;//the guy can kill the piece to get out of check so no checkmate
+                            return true;//Player can kill the checking piece so it is not checkmate
                         }
                         this.whiteKingSquare = oldWhiteKingSquare;
                     }
@@ -386,14 +384,14 @@ public class Board {
     private Set<Integer> getAttackingSquare(boolean color){
         Set<Integer> attackingSquares = new HashSet<>();
         if(color){
-            int whiteSquareThatCanKillBlackKing = 0; //MAKE SURE THIS IS ALWAYS INITIALIZED. SHOULD BE BECAUSE ITS IN CHECK
+            int whiteSquareThatCanKillBlackKing = 0;
             for (int number : whiteLocations) {
                 if (numberToPiece(number).canMove(this.board, number, blackKingSquare)) {
                     attackingSquares.add(number);
                 }
             }
         } else {
-            int blackSquareThatCanKillBlackKing = 0; //MAKE SURE THIS IS ALWAYS INITIALIZED. SHOULD BE BECAUSE ITS IN CHECK
+            int blackSquareThatCanKillBlackKing = 0;
             for (int number : this.blackLocations) {
                 if (numberToPiece(number).canMove(this.board, number, this.whiteKingSquare)) {
                     attackingSquares.add(number);
@@ -423,11 +421,7 @@ public class Board {
         if(this.canCaptureCheckingPiece(!this.whoseTurn, attackingSquare)){
             return;
         }
-        if (whoseTurn == white && blackIsInCheck()) {//figure out for multiple pieces attacking the king
-
-            //Set whiteSquaresThatCanKillBlackKing = new HashSet<Integer>();
-
-            //if (this.numberToPiece(whiteSquareThatCanKillBlackKing) instanceof Knight){
+        if (whoseTurn == white && blackIsInCheck()) {
 
             if (this.getX(attackingSquare) == this.getX(blackKingSquare)) {//same column, same Y
                 int sharedX = this.getX(blackKingSquare);
@@ -478,7 +472,7 @@ public class Board {
                     }
                 }
             } else {
-                //diagonal. ACTUAL VERY BAD LOGICAL ERROR POSSIBLY CAN THIS BE A KNIGHT HERE SO NOT NECESSARILY DIAGONAL
+                //Note to self: could be a knight
                 if (numberToPiece(attackingSquare) instanceof Bishop) {
 
 
@@ -514,8 +508,8 @@ public class Board {
                     }
                 }
             }
-//VERY MUCH HAVE TO CHECK SOMEWHERE IF THE KING CAN SIMPLY ESCAPE BECAUSE HE CAN MOVE UP THERE. IF FINALLY IF NOT RETURN TRUE BUT FIRST SET ISCHECKMATED
-            this.isCheckmated = true;//switch turn?
+
+            this.isCheckmated = true;
             System.out.println("CHECKMATE!");
         }
     }
@@ -524,7 +518,7 @@ public class Board {
         return this.whoseTurn ? this.whiteIsInCheck() : this.blackIsInCheck();
     }
 
-    //deal with king or rook or pawn set as moved if it was actually illegal bc of check
+    //Don't set pieces as moved if have to undo
     private void doTheActualMove(int startX, int endX, int startY, int endY) {
         this.board[endX][endY] = this.board[startX][startY];
         this.board[startX][startY] = null;
